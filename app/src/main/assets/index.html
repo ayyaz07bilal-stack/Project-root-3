@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screen Freeze</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #ff0000, #cc0000);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .lock-container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .lock-title {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .lock-subtitle {
+            color: white;
+            font-size: 18px;
+            margin-bottom: 25px;
+            opacity: 0.9;
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            border: none;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            text-align: center;
+        }
+
+        .unlock-btn {
+            background: white;
+            color: #ff0000;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .unlock-btn:hover {
+            background: #f0f0f0;
+            transform: scale(1.05);
+        }
+
+        .unlock-btn:active {
+            transform: scale(0.95);
+        }
+
+        .error-message {
+            color: #ffeb3b;
+            margin-top: 15px;
+            font-size: 16px;
+            display: none;
+        }
+
+        .success-message {
+            color: #90EE90;
+            margin-top: 15px;
+            font-size: 16px;
+            display: none;
+        }
+
+        .attempts-counter {
+            color: white;
+            margin-top: 15px;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        /* Prevent text selection */
+        * {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        /* Prevent context menu */
+        body {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="lock-container">
+        <div class="lock-title">🔒 SCREEN FROZEN</div>
+        <div class="lock-subtitle">Enter password to unlock device</div>
+        
+        <input type="password" 
+               class="password-input" 
+               id="passwordInput" 
+               placeholder="Enter password" 
+               autocomplete="off">
+        
+        <button class="unlock-btn" onclick="checkPassword()">UNLOCK SCREEN</button>
+        
+        <div class="error-message" id="errorMessage">❌ Wrong password! Try again.</div>
+        <div class="success-message" id="successMessage">✅ Access Granted! Closing app...</div>
+        
+        <div class="attempts-counter" id="attemptsCounter">
+            Attempts: <span id="attemptCount">0</span>/5
+        </div>
+    </div>
+
+    <script>
+        const CORRECT_PASSWORD = "freezeyou";
+        let attempts = 0;
+        const maxAttempts = 5;
+
+        function checkPassword() {
+            const passwordInput = document.getElementById('passwordInput');
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+            const attemptCount = document.getElementById('attemptCount');
+            const password = passwordInput.value;
+
+            if (password === CORRECT_PASSWORD) {
+                // SUCCESS - Show success message and auto close
+                successMessage.style.display = 'block';
+                errorMessage.style.display = 'none';
+                passwordInput.disabled = true;
+                document.querySelector('.unlock-btn').disabled = true;
+                
+                // Change background to green for success
+                document.body.style.background = 'linear-gradient(135deg, #00ff00, #00cc00)';
+                
+                // Auto close after 1.5 seconds
+                setTimeout(function() {
+                    closeApp();
+                }, 1500);
+                
+            } else {
+                // WRONG PASSWORD
+                attempts++;
+                attemptCount.textContent = attempts;
+                
+                errorMessage.style.display = 'block';
+                successMessage.style.display = 'none';
+                passwordInput.value = '';
+                passwordInput.focus();
+                
+                // Shake animation for wrong password
+                passwordInput.style.animation = 'shake 0.5s';
+                setTimeout(() => {
+                    passwordInput.style.animation = '';
+                }, 500);
+
+                if (attempts >= maxAttempts) {
+                    // Too many attempts
+                    document.querySelector('.unlock-btn').disabled = true;
+                    passwordInput.disabled = true;
+                    errorMessage.textContent = '❌ Too many failed attempts! Try again later.';
+                    errorMessage.style.color = '#ff6b6b';
+                }
+            }
+        }
+
+        function closeApp() {
+            // Try to close the app through Android interface
+            if (typeof Android !== 'undefined' && Android.closeApp) {
+                Android.closeApp();
+            } else {
+                // Fallback for browser testing
+                alert('App would close now. In WebView, this will exit the app.');
+                // In real WebView, this should trigger app closure
+            }
+        }
+
+        // Enter key support
+        document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkPassword();
+            }
+        });
+
+        // Prevent right-click context menu
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        });
+
+        // Prevent going back
+        window.history.pushState(null, null, window.location.href);
+        window.onpopstate = function() {
+            window.history.go(1);
+        };
+
+        // Focus on input when page loads
+        window.onload = function() {
+            document.getElementById('passwordInput').focus();
+        }
+
+        // Add shake animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                25% { transform: translateX(-10px); }
+                75% { transform: translateX(10px); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
