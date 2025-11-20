@@ -1,0 +1,21 @@
+name: Build APK
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build APK
+      uses: uraimo/run-on-arch-action@v2
+      with:
+        arch: x64
+        distro: ubuntu20.04
+        run: |
+          apt update && apt install -y wget unzip
+          wget https://redirector.gvt1.com/edgedl/android/studio/ide-zips/2022.3.1.18/android-studio-2022.3.1.18-linux.tar.gz
+          tar -xzf android-studio-*.tar.gz
+          ./android-studio/bin/studio.sh build
+    - uses: actions/upload-artifact@v2
+      with:
+        name: app-apk
+        path: app/build/outputs/apk/
