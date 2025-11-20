@@ -1,21 +1,32 @@
-name: Build APK
-on: [push]
+name: Build Android APK
+
+on: [push, workflow_dispatch]
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+      
     - name: Build APK
-      uses: uraimo/run-on-arch-action@v2
+      run: |
+        chmod +x ./gradlew
+        ./gradlew assembleDebug
+        
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
       with:
-        arch: x64
-        distro: ubuntu20.04
-        run: |
-          apt update && apt install -y wget unzip
-          wget https://redirector.gvt1.com/edgedl/android/studio/ide-zips/2022.3.1.18/android-studio-2022.3.1.18-linux.tar.gz
-          tar -xzf android-studio-*.tar.gz
-          ./android-studio/bin/studio.sh build
-    - uses: actions/upload-artifact@v2
-      with:
-        name: app-apk
-        path: app/build/outputs/apk/
+        name: screen-freeze-apk
+        path: app/build/outputs/apk/debug/app-debug.apk
+        retention-days: 7
